@@ -1,2 +1,2 @@
 # pypracitce
-## crossin课程作业
+crossin课程作业
