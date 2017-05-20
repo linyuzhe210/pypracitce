@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-from functools import reduce
 import time
 import threading
 
@@ -16,8 +15,6 @@ class Webspider:
                           "AppleWebKit/537.36"
                           "(KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36"
         }
-
-    def max_page_num(self):
         find_max_nums_pages = requests.get('http://jandan.net/ooxx/', headers=self.headers)
         find_max_nums_pages.encoding = 'utf-8'
         max_nums_page_info = BeautifulSoup(find_max_nums_pages.text, 'lxml')
@@ -31,16 +28,16 @@ class Webspider:
                 print('你输入的页面超过最大页数!')
                 break
 
-    def crawl(self):
+    def download_img(self):
         ls = []
-        super(Webspider, self).__init__()
         if self.start_page == self.end_page:
             for i in range(1):
                 html = requests.get(self.html, headers=self.headers)
                 html.encoding = 'utf-8'
                 html_source = BeautifulSoup(html.content, 'lxml')
                 meizi = html_source.select('.commentlist .view_img_link')
-                ls.append(meizi)
+                for each_meizi in meizi:
+                    ls.append(each_meizi)
         else:
             for i in range(eval(self.end_page) - eval(self.start_page)):
                 if self.start_page <= self.end_page:
@@ -48,20 +45,17 @@ class Webspider:
                     html_source.encoding = 'utf-8'
                     page_source = BeautifulSoup(html_source.content, 'lxml')
                     meizi = page_source.select('.commentlist .view_img_link')
-                    ls.append(meizi)
+                    for each_meizi in meizi:
+                        ls.append(each_meizi)
                 else:
                     print('起始页面大于末尾页面！')
                     break
-        return ls
-
-    def download_img(self):
         count = 0
-        meizi_all_img = len(list(reduce(lambda x, y:x+y, Webspider.crawl(self))))
-        for meizi_picture in list(reduce(lambda x, y: x + y, Webspider.crawl(self))):
+        meizi_all_img = len(ls)
+        for meizi_picture in ls:
             count += 1
             meizi_picture = meizi_picture['href']
-            meizi_picture = meizi_picture.replace('//', '')
-            download_img = requests.get('http://' + meizi_picture, headers=self.headers, stream=True)
+            download_img = requests.get('http:' + meizi_picture, headers=self.headers, stream=True)
             filename = meizi_picture.split('/')[-1]
             with open(filename, 'wb') as file:
                 print('正在下载第{0}/{1}张图片'.format(count, meizi_all_img))
@@ -70,10 +64,8 @@ class Webspider:
 if __name__ in '__main__':
     start_time = time.time()
     img = Webspider(input('请输入起始页数:'), input('请输入末尾页数:'))
-    img.max_page_num()
-    img.crawl()
     try:
-        t = threading.Thread(target=img.download_img(), daemon=True)
+        t = threading.Thread(target=img.download_img, daemon=True)
         t.start()
         t.join()
     except TypeError:
